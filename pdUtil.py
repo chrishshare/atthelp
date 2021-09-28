@@ -1,13 +1,72 @@
-import pandas as pd
+from pandas import read_excel, read_sql
 import sqlite3
+from openpyxl import load_workbook
 
 
-def read_excel(excel, sheetname):
-    df = pd.read_excel(io=excel, sheet_name=sheetname, header=0, engine='openpyxl')
+def read_excel_sqlite(excel, sheetname):
+    df = read_excel(io=excel, sheet_name=sheetname, header=0, engine='openpyxl')
     print(df)
     engine = sqlite3.connect('atthelper.db')
     df.to_sql(name='attendance', con=engine, if_exists='replace')
 
 
+def write_with_start_end(excel, sheetname):
+    sql = """select t2.name as 姓名, t2.company as 公司, t2.service as 外包服务编号, t2.start as 上班时间, t2.end as 下班时间, t2.terminal as 终端
+from (select t.name, t.company, t.service, min(t.atttime) as start, max(t.atttime) as end, t.terminal
+      from attendance t
+      group by name, strftime('%Y%m%d', t.atttime)
+      order by name) t2
+where t2.start <> t2.end
+order by name;"""
+    engine = sqlite3.connect('atthelper.db')
+    df = read_sql(sql=sql, con=engine)
+    df.to_excel(excel_writer=excel, sheet_name=sheetname)
+    return df.shape[0]
+
+
+def write_only_start_or_end(excel, sheetname, startrow):
+    sql = """select t2.name as 姓名, t2.company as 公司, t2.service as 外包服务编号, t2.start as 上班时间, t2.end as 下班时间, t2.terminal as 终端
+from (select t.name, t.company, t.service, min(t.atttime) as start, max(t.atttime) as end, t.terminal
+      from attendance t
+      group by name, strftime('%Y%m%d', t.atttime)
+      order by name) t2
+where t2.start = t2.end
+order by name;"""
+    engine = sqlite3.connect('atthelper.db')
+    df = read_sql(sql=sql, con=engine)
+
+    workbook = load_workbook(excel)
+    # sheet = workbook.get_sheet_by_name(sheetname)
+    sheet = workbook[sheetname]
+
+    for index, rows in df.iterrows():
+        row_nu = startrow + 2 + index
+        # name
+        sheet.cell(row_nu, 2).value = rows[0]
+        # company
+        sheet.cell(row_nu, 3).value = rows[1]
+        # service
+        sheet.cell(row_nu, 4).value = rows[2]
+
+        # terminal
+        sheet.cell(row_nu, 7).value = rows[5]
+
+        if int(rows[3][11:13]) < 18:
+            # starttime
+            sheet.cell(row_nu, 5).value = rows[3]
+            # endtime
+            sheet.cell(row_nu, 6).value = '--'
+        else:
+            # starttime
+            sheet.cell(row_nu, 5).value = '--'
+            # endtime
+            sheet.cell(row_nu, 6).value = rows[3]
+
+    sheet.delete_cols(1)
+    workbook.save(excel)
+
+
 if __name__ == '__main__':
-    read_excel(excel='原始打卡记录导出.xlsx', sheetname='原始打卡记录')
+    read_excel_sqlite(excel='原始打卡记录导出.xlsx', sheetname='原始打卡记录')
+    count = write_with_start_end(excel='result.xlsx', sheetname='打卡记录')
+    write_only_start_or_end(excel='result.xlsx', sheetname='打卡记录', startrow=count)
