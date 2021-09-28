@@ -1,12 +1,12 @@
 from pandas import read_excel, read_sql
-import sqlite3
+from sqlite3 import connect
 from openpyxl import load_workbook
 
 
 def read_excel_sqlite(excel, sheetname):
     df = read_excel(io=excel, sheet_name=sheetname, header=0, engine='openpyxl')
     print(df)
-    engine = sqlite3.connect('atthelper.db')
+    engine = connect('atthelper.db')
     df.to_sql(name='attendance', con=engine, if_exists='replace')
 
 
@@ -18,7 +18,7 @@ from (select t.name, t.company, t.service, min(t.atttime) as start, max(t.atttim
       order by name) t2
 where t2.start <> t2.end
 order by name;"""
-    engine = sqlite3.connect('atthelper.db')
+    engine = connect('atthelper.db')
     df = read_sql(sql=sql, con=engine)
     df.to_excel(excel_writer=excel, sheet_name=sheetname)
     return df.shape[0]
@@ -32,7 +32,7 @@ from (select t.name, t.company, t.service, min(t.atttime) as start, max(t.atttim
       order by name) t2
 where t2.start = t2.end
 order by name;"""
-    engine = sqlite3.connect('atthelper.db')
+    engine = connect('atthelper.db')
     df = read_sql(sql=sql, con=engine)
 
     workbook = load_workbook(excel)
