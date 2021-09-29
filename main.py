@@ -2,10 +2,12 @@
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-from os import walk
+import os
 from shutil import copy
 from pdUtil import *
 from openpyxl import load_workbook
+import time
+import shutil
 
 
 def replace_excel_title(excel, sheetname):
@@ -20,10 +22,10 @@ def replace_excel_title(excel, sheetname):
 
 
 def get_source_excel():
-    for root, dirs, files in walk('.'):
-        for fl in files:
-            if fl.endswith('.xlsx'):
-                return fl
+    files = os.listdir('.')
+    for file in files:
+        if file.endswith('.xlsx'):
+            return file
 
 
 def backup_source_excel(source):
@@ -31,7 +33,15 @@ def backup_source_excel(source):
     copy(source, dst)
 
 
-# Press the green button in the gutter to run the script.
+def backup_all_excel():
+    dir = '结果文件_' + time.strftime("%Y%m%d%H%M%S", time.localtime())
+    os.mkdir(dir)
+    files = os.listdir('.')
+    for file in files:
+        if file.endswith('.xlsx'):
+            shutil.move(file, dir)
+
+
 if __name__ == '__main__':
     excel = get_source_excel()
     backup_source_excel(excel)
@@ -41,3 +51,4 @@ if __name__ == '__main__':
     res_excel = excel.split('.xlsx')[0] + '_结果.xlsx'
     count = write_with_start_end(excel=res_excel, sheetname='打卡记录')
     write_only_start_or_end(excel=res_excel, sheetname='打卡记录', startrow=count)
+    backup_all_excel()
