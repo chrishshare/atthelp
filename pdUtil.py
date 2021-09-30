@@ -11,8 +11,8 @@ def read_excel_sqlite(excel, sheetname):
 
 
 def write_with_start_end(excel, sheetname):
-    sql = """select t2.name as 姓名, t2.company as 公司, t2.service as 外包服务编号, t2.start as 上班时间, t2.end as 下班时间, t2.terminal as 终端
-from (select t.name, t.company, t.service, min(t.atttime) as start, max(t.atttime) as end, t.terminal
+    sql = """select t2.name as 姓名, t2.company as 公司, t2.service as 外包服务编号, t2.start as 上班时间, t2.end as 下班时间, t2.terminal as 终端, t2.attdate as 上班日期
+from (select t.name, t.company, t.service, min(t.atttime) as start, max(t.atttime) as end, t.terminal, strftime('%Y-%m-%d', t.atttime) as attdate
       from attendance t
       group by name, strftime('%Y%m%d', t.atttime)
       order by name) t2
@@ -25,8 +25,8 @@ order by name;"""
 
 
 def write_only_start_or_end(excel, sheetname, startrow):
-    sql = """select t2.name as 姓名, t2.company as 公司, t2.service as 外包服务编号, t2.start as 上班时间, t2.end as 下班时间, t2.terminal as 终端
-from (select t.name, t.company, t.service, min(t.atttime) as start, max(t.atttime) as end, t.terminal
+    sql = """select t2.name as 姓名, t2.company as 公司, t2.service as 外包服务编号, t2.start as 上班时间, t2.end as 下班时间, t2.terminal as 终端, t2.attdate as 上班日期
+from (select t.name, t.company, t.service, min(t.atttime) as start, max(t.atttime) as end, t.terminal, strftime('%Y-%m-%d', t.atttime) as attdate
       from attendance t
       group by name, strftime('%Y%m%d', t.atttime)
       order by name) t2
@@ -50,15 +50,17 @@ order by name;"""
 
         # terminal
         sheet.cell(row_nu, 7).value = rows[5]
+        # 上班日期
+        sheet.cell(row_nu, 8).value = rows[6]
 
         if int(rows[3][11:13]) < 18:
             # starttime
             sheet.cell(row_nu, 5).value = rows[3]
             # endtime
-            sheet.cell(row_nu, 6).value = '--'
+            sheet.cell(row_nu, 6).value = ''
         else:
             # starttime
-            sheet.cell(row_nu, 5).value = '--'
+            sheet.cell(row_nu, 5).value = ''
             # endtime
             sheet.cell(row_nu, 6).value = rows[3]
 
