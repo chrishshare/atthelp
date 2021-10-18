@@ -47,10 +47,9 @@ if __name__ == '__main__':
     backup_source_excel(excel)
     src_sheetname = '原始打卡记录'
     replace_excel_title(excel=excel, sheetname=src_sheetname)
-    read_excel_to_sqlite(excel=excel, sheetname='原始打卡记录')
     res_excel = excel.split('.xlsx')[0] + '_结果.xlsx'
 
-    read_excel_to_sqlite(excel='原始打卡记录导出.xlsx', sheetname='原始打卡记录')
+    read_excel_to_sqlite(excel=excel, sheetname='原始打卡记录')
     deal_to_sqlite()
     update_midnight()
     write_to_excel(excel=res_excel)
