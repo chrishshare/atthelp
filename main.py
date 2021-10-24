@@ -8,6 +8,7 @@ from pdUtil import *
 from openpyxl import load_workbook
 import time
 import shutil
+from pdUtilV2 import PdUtilV2
 
 
 def replace_excel_title(excel, sheetname):
@@ -49,9 +50,17 @@ if __name__ == '__main__':
     replace_excel_title(excel=excel, sheetname=src_sheetname)
     res_excel = excel.split('.xlsx')[0] + '_结果.xlsx'
 
-    read_excel_to_sqlite(excel=excel, sheetname='原始打卡记录')
-    deal_to_sqlite()
-    update_midnight()
-    write_to_excel(excel=res_excel)
+    pdu = PdUtilV2()
+
+    pdu.read_excel_to_sqlite(excel=excel, sheet=src_sheetname)
+
+    pdu.deal_to_result_table()
+
+    pdu.deal_bf5()
+
+    pdu.update_start_or_end()
+
+    pdu.write_to_excel(excel=res_excel)
+
 
     backup_all_excel()
